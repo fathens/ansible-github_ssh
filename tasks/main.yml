@@ -1,0 +1,28 @@
+- debug: msg=FOUND
+  when: lookup('env', 'GITHUB_ACCESS_TOKEN') == None
+
+- name: generate ssh key for github
+  openssh_keypair:
+    path: "{{ ansible_env.HOME }}/.ssh/{{ github_sshkey_name }}"
+  register: github_ssh
+  when: lookup('env', 'GITHUB_ACCESS_TOKEN') == None
+
+- name: register github ssh key
+  local_action:
+    module: github_key
+    name: "Ansible-{{ ansible_machine_id }}"
+    token: "{{ lookup('env','GITHUB_ACCESS_TOKEN') }}"
+    pubkey: "{{ github_ssh.public_key }}"
+  when: lookup('env', 'GITHUB_ACCESS_TOKEN') == None
+
+- name: append configs into .ssh/
+  blockinfile:
+    path: "{{ ansible_env.HOME }}/.ssh/{{ item.name }}"
+    markr: "# ANSIBLE GITHUB_SSH"
+    create: yes
+    mode: 0644
+    block: "{{ item.content }}"
+  with_items:
+    - github_ssh_config
+    - github_ssh_known_hosts
+  when: lookup('env', 'GITHUB_ACCESS_TOKEN') == None
