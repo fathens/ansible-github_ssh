@@ -1,13 +1,13 @@
 - name: generate ssh key for github
   openssh_keypair:
-    path: "{{ ansible_env.HOME }}/.ssh/{{ github_sshkey_name }}"
+    path: "{{ ansible_env.HOME }}/.ssh/{{ github_ssh_key_name }}"
   register: github_ssh
   when: lookup('env', 'GITHUB_ACCESS_TOKEN') != ''
 
 - name: register github ssh key
   local_action:
     module: github_key
-    name: "Ansible-{{ ansible_machine_id }}"
+    name: "{{ github_ssh_id }}"
     token: "{{ lookup('env','GITHUB_ACCESS_TOKEN') }}"
     pubkey: "{{ github_ssh.public_key }}"
   when: lookup('env', 'GITHUB_ACCESS_TOKEN') != ''

@@ -1,5 +1,7 @@
 github_ssh_key_name: github
 
+github_ssh_id: "Ansible-{{ inventory_hostname }}_{{ ansible_machine_id }}"
+
 github_ssh_config:
   name: config
   content: |
