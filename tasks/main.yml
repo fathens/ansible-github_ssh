@@ -1,25 +1,45 @@
+- set_fact:
+    ssh_key_path: "{{ ansible_env.HOME }}/.ssh/{{ github_ssh_key_name }}"
+
+- stat:
+    path: "{{ ssh_key_path }}"
+  register: ssh_key_file
+
 - name: generate ssh key for github
+  when: (lookup('env', 'GITHUB_ACCESS_TOKEN') != '') and (not ssh_key_file.stat.exists)
   openssh_keypair:
-    path: "{{ ansible_env.HOME }}/.ssh/{{ github_ssh_key_name }}"
-  register: github_ssh
+    path: "{{ ssh_key_path }}"
+
+- name: take ssh_key
   when: lookup('env', 'GITHUB_ACCESS_TOKEN') != ''
+  shell: cat "{{ ssh_key_path }}.pub"
+  register: ssh_key
 
 - name: register github ssh key
+  when: lookup('env', 'GITHUB_ACCESS_TOKEN') != ''
   local_action:
     module: github_key
     name: "{{ github_ssh_id }}"
     token: "{{ lookup('env','GITHUB_ACCESS_TOKEN') }}"
-    pubkey: "{{ github_ssh.public_key }}"
-  when: lookup('env', 'GITHUB_ACCESS_TOKEN') != ''
+    pubkey: "{{ ssh_key.stdout }}"
+  register: github_ssh_registered
+  ignore_errors: true
+
+- fail:
+    msg: "Can not register {{ ssh_key_path }} to Github"
+  when: github_ssh_registered is not skipped and github_ssh_registered is failed and (github_ssh_registered.msg.find('already registered') < 0)
+
+- debug:
+    msg: "{{ github_ssh_registered.msg }}"
 
 - name: append configs into .ssh/
+  when: lookup('env', 'GITHUB_ACCESS_TOKEN') != ''
   blockinfile:
     path: "{{ ansible_env.HOME }}/.ssh/{{ item.name }}"
     marker: "# {mark} ANSIBLE GITHUB_SSH"
     create: yes
     mode: 0644
     block: "{{ item.content }}"
-  with_items:
+  loop:
     - "{{ github_ssh_config }}"
     - "{{ github_ssh_known_hosts }}"
-  when: lookup('env', 'GITHUB_ACCESS_TOKEN') != ''
