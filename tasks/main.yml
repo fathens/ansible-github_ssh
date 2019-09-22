@@ -29,9 +29,6 @@
     msg: "Can not register {{ ssh_key_path }} to Github"
   when: github_ssh_registered is not skipped and github_ssh_registered is failed and (github_ssh_registered.msg.find('already registered') < 0)
 
-- debug:
-    msg: "{{ github_ssh_registered.msg }}"
-
 - name: append configs into .ssh/
   when: lookup('env', 'GITHUB_ACCESS_TOKEN') != ''
   blockinfile:
