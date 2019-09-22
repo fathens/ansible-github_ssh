@@ -7,7 +7,7 @@ github_ssh_config:
   content: |
     Host github github.com
       HostName github.com
-      Identityfile ~/.ssh/{{ github_sshkey_name }}
+      Identityfile ~/.ssh/{{ github_ssh_key_name }}
       User git
 
 github_ssh_known_hosts:
